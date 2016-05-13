@@ -1,0 +1,636 @@
+{% load staticfiles %}
+<meta charset="utf-8">
+<link rel="stylesheet" type="text/css" href="{% static 'pokerclock/style.css' %}" />
+<link rel="icon" href="{%static 'pokerclock/images/cat.jpg'%}">
+<script type="text/javascript">
+
+var work = false, pause, onPause = 0, level = 1, tournamentStarted = false, blindStructure, intMin=0, intSec=0;
+var start;
+var currency = " "+"{{currency}}";
+var totalPlayers = parseInt("{{total_players}}");
+var playersLeft = parseInt("{{total_players}}");
+var startStack = parseInt("{{start_stack}}");
+var chipsInPlay = startStack*totalPlayers;
+var bank = parseInt("{{total_players}}")*parseInt("{{buy_in}}");
+var totalRebuys = 0;
+var totalAddons = 0;
+var rebuyChips = parseInt("{{rebuy_chips}}");
+var rebuyPrice = parseInt("{{rebuy_price}}");
+var rebuyStopLevel = parseInt("{{rebuy_stop}}");
+var addonChips = parseInt("{{addon_chips}}");
+var addonPrice = parseInt("{{addon_price}}");
+var knockoutMoney = parseInt("{{KO_price}}");
+var knockoutType = parseInt("{{KO_type}}");
+var knockoutShare = parseInt("{{KO_share}}");
+var payouts = "{{payouts}}".split(",");
+var players = [];
+var levelObjects = [{type:"nothing",id:999,sb:1,bb:1}];
+var levelChangedManually = false;
+
+function startTimer(duration, display) 
+{
+    start = Date.now(); 
+    var diff, minutes, seconds;
+
+    function timer() 
+    {
+        // get the number of seconds that have elapsed since 
+        // startTimer() was called
+        if (work==true)
+    	{
+            diff = duration - (((Date.now() - start) / 1000) | 0) + onPause;
+		}
+
+		else
+		{
+            if(levelChangedManually==false)
+            {
+                onPause += 1;
+            }
+			else
+            {
+                start = Date.now();
+                onPause=0;
+            }
+		}
+
+        // does the same job as parseInt truncates the float
+        minutes = (diff / 60) | 0;
+        seconds = (diff % 60) | 0;
+
+        intMin = minutes;
+        intSec = seconds;
+
+        minutes = minutes < 10 ? "0" + minutes : minutes;
+        seconds = seconds < 10 ? "0" + seconds : seconds;
+
+        if (seconds <= 10 && tournamentStarted == true && minutes=="00")
+        {
+        	document.getElementById("timer").style.color='red';
+        } 
+        else
+        {
+        	document.getElementById("timer").style.color='white';
+		}
+        if (tournamentStarted == true && levelChangedManually==false)
+        {
+        	display.textContent = minutes + ":" + seconds; 
+        }
+
+        if (diff <= 1) 
+        {
+            // add one second so that the count down starts at the full duration
+            // example 05:00 not 04:59
+            start = Date.now() + 1000;
+            level+=1;
+            document.getElementById('level-notify').play();
+            onPause=0;
+
+            setInterval(function()
+        	{
+                if ("{{addon_game}}"=="Yes")
+                {
+                    //handle R/A buttons here
+                    if (levelObjects[level]['type'] == 'break')
+                    {
+                        document.getElementById("addon-plus").disabled = false;
+                        document.getElementById("addon-minus").disabled = false;   
+                        document.getElementById("rebuy-plus").disabled = false;
+                        document.getElementById("rebuy-minus").disabled = false;                                      
+                    }
+                    else if (level < rebuyStopLevel + 1)
+                    {
+                        document.getElementById("addon-plus").disabled = true;
+                        document.getElementById("addon-minus").disabled = true;  
+                        document.getElementById("rebuy-plus").disabled = false;
+                        document.getElementById("rebuy-minus").disabled = false;                                
+                    }
+                    else
+                    {
+                        document.getElementById("addon-plus").disabled = true;
+                        document.getElementById("addon-minus").disabled = true;  
+                        document.getElementById("rebuy-plus").disabled = true;
+                        document.getElementById("rebuy-minus").disabled = true;                
+                    }
+
+                    if (levelObjects[level+1]['type'] == 'break') 
+                    {
+                        document.getElementById("blinds").innerHTML = (levelObjects[level]['sb'] +"/"+ levelObjects[level]['bb']);
+                        document.getElementById("current-level").innerHTML=level;
+                        document.getElementById("next-blinds").innerHTML = "";
+                        document.getElementById("next-level").innerHTML = "<i>Break</i>";  
+                        document.getElementById("rebuys-description").innerHTML="Last level with rebuys";
+                        document.getElementById("addon-description").innerHTML="Add-ons available after this level";   
+                        document.getElementById("break-section").style.display='none';              
+                    }
+                    else if (levelObjects[level]['type'] == 'break')
+                    {
+                        document.getElementById("blinds").innerHTML = "";
+                        document.getElementById("current-level").innerHTML="(On break)";
+                        document.getElementById("next-blinds").innerHTML = "<i>" + (levelObjects[level+1]['sb'] +"/"+ levelObjects[level+1]['bb']) + "</i>";
+                        document.getElementById("next-level").innerHTML = "<i>" + (level) + "</i>";
+                        document.getElementById("break-section").style.display='block';
+                        document.getElementById("rebuys-description").innerHTML="Break before freezeout stage";
+                        document.getElementById("addon-description").innerHTML="Players can add-on chips during the break";
+                     
+                    }
+                    else
+                    {
+                        if (level < rebuyStopLevel + 1)
+                        {
+                            document.getElementById("blinds").innerHTML = (levelObjects[level]['sb'] +"/"+ levelObjects[level]['bb']);
+                            document.getElementById("current-level").innerHTML=level;
+                            document.getElementById("next-blinds").innerHTML = "<i>" + (levelObjects[level+1]['sb'] +"/"+ levelObjects[level+1]['bb']) + "</i>";
+                            document.getElementById("next-level").innerHTML = "<i>" + (level+1) + "</i>";
+
+                            document.getElementById("rebuys-description").innerHTML="Rebuys available through level " + rebuyStopLevel;
+                            document.getElementById("addon-description").innerHTML="";
+                            document.getElementById("break-section").style.display='none';
+                        }
+                        else
+                        {
+                            document.getElementById("blinds").innerHTML = (levelObjects[level]['sb'] +"/"+ levelObjects[level]['bb']);
+                            document.getElementById("current-level").innerHTML=level-1;
+                            document.getElementById("next-blinds").innerHTML = "<i>" + (levelObjects[level+1]['sb'] +"/"+ levelObjects[level+1]['bb']) + "</i>";
+                            document.getElementById("next-level").innerHTML = "<i>" + (level) + "</i>";  
+
+                            document.getElementById("rebuys-description").innerHTML="Freezeout";
+                            document.getElementById("addon-description").innerHTML="";
+                            document.getElementById("break-section").style.display='none';
+                        }
+                    }            
+                }
+
+                //Freezeout game
+                else
+                {
+                    document.getElementById("blinds").innerHTML = (levelObjects[level]['sb'] +"/"+ levelObjects[level]['bb']);
+                    document.getElementById("current-level").innerHTML=level;
+                    document.getElementById("next-blinds").innerHTML = "<i>" + (levelObjects[level+1]['sb'] +"/"+ levelObjects[level+1]['bb']) + "</i>";
+                    document.getElementById("next-level").innerHTML = "<i>" + (level+1) + "</i>";           
+                }
+        	}, 1000);  
+        }
+    };
+    // we don't want to wait a full second before the timer starts
+	timer();
+	setInterval(timer, 1000); 
+}
+
+function changeLevel(up)
+{
+    if (work==true)
+    {
+        document.getElementById("scroll-level-notification").style.display='block';
+    }
+    else
+    {
+        //if level up
+        if(up==true)
+        {
+            level+=1;
+        }
+
+        //if level down
+        else
+        {
+            if(level!=1)
+            {
+                level-=1;
+            }
+        }
+
+        document.getElementById("timer").innerHTML = "{{limit}}"+":00";
+        levelChangedManually = true; 
+
+        //I've added this block
+        if ("{{addon_game}}"=="Yes")
+        {
+            //handle R/A buttons here
+            if (levelObjects[level]['type'] == 'break')
+            {
+                document.getElementById("addon-plus").disabled = false;
+                document.getElementById("addon-minus").disabled = false;   
+                document.getElementById("rebuy-plus").disabled = false;
+                document.getElementById("rebuy-minus").disabled = false;                                      
+            }
+            else if (level < rebuyStopLevel + 1)
+            {
+                document.getElementById("addon-plus").disabled = true;
+                document.getElementById("addon-minus").disabled = true;  
+                document.getElementById("rebuy-plus").disabled = false;
+                document.getElementById("rebuy-minus").disabled = false;                                
+            }
+            else
+            {
+                document.getElementById("addon-plus").disabled = true;
+                document.getElementById("addon-minus").disabled = true;  
+                document.getElementById("rebuy-plus").disabled = true;
+                document.getElementById("rebuy-minus").disabled = true;                
+            }
+
+            if (levelObjects[level+1]['type'] == 'break') 
+            {
+                document.getElementById("blinds").innerHTML = (levelObjects[level]['sb'] +"/"+ levelObjects[level]['bb']);
+                document.getElementById("current-level").innerHTML=level;
+                document.getElementById("next-blinds").innerHTML = "";
+                document.getElementById("next-level").innerHTML = "<i>Break</i>";  
+                document.getElementById("rebuys-description").innerHTML="Last level with rebuys";
+                document.getElementById("addon-description").innerHTML="Add-ons available after this level";   
+                document.getElementById("break-section").style.display='none';              
+            }
+            else if (levelObjects[level]['type'] == 'break')
+            {
+                document.getElementById("blinds").innerHTML = "";
+                document.getElementById("current-level").innerHTML="(On break)";
+                document.getElementById("next-blinds").innerHTML = "<i>" + (levelObjects[level+1]['sb'] +"/"+ levelObjects[level+1]['bb']) + "</i>";
+                document.getElementById("next-level").innerHTML = "<i>" + (level) + "</i>";
+                document.getElementById("break-section").style.display='block';
+                document.getElementById("rebuys-description").innerHTML="Break before freezeout stage";
+                document.getElementById("addon-description").innerHTML="Players can add-on chips during the break";
+             
+            }
+            else
+            {
+                if (level < rebuyStopLevel + 1)
+                {
+                    document.getElementById("blinds").innerHTML = (levelObjects[level]['sb'] +"/"+ levelObjects[level]['bb']);
+                    document.getElementById("current-level").innerHTML=level;
+                    document.getElementById("next-blinds").innerHTML = "<i>" + (levelObjects[level+1]['sb'] +"/"+ levelObjects[level+1]['bb']) + "</i>";
+                    document.getElementById("next-level").innerHTML = "<i>" + (level+1) + "</i>";
+
+                    document.getElementById("rebuys-description").innerHTML="Rebuys available through level " + rebuyStopLevel;
+                    document.getElementById("addon-description").innerHTML="";
+                    document.getElementById("break-section").style.display='none';
+                }
+                else
+                {
+                    document.getElementById("blinds").innerHTML = (levelObjects[level]['sb'] +"/"+ levelObjects[level]['bb']);
+                    document.getElementById("current-level").innerHTML=level-1;
+                    document.getElementById("next-blinds").innerHTML = "<i>" + (levelObjects[level+1]['sb'] +"/"+ levelObjects[level+1]['bb']) + "</i>";
+                    document.getElementById("next-level").innerHTML = "<i>" + (level) + "</i>";  
+
+                    document.getElementById("rebuys-description").innerHTML="Freezeout";
+                    document.getElementById("addon-description").innerHTML="";
+                    document.getElementById("break-section").style.display='none';
+                }
+            }            
+        }
+
+        //Freezeout game
+        else
+        {
+            document.getElementById("blinds").innerHTML = (levelObjects[level]['sb'] +"/"+ levelObjects[level]['bb']);
+            document.getElementById("current-level").innerHTML=level;
+            document.getElementById("next-blinds").innerHTML = "<i>" + (levelObjects[level+1]['sb'] +"/"+ levelObjects[level+1]['bb']) + "</i>";
+            document.getElementById("next-level").innerHTML = "<i>" + (level+1) + "</i>";           
+        }
+    }
+}
+
+function switchWork()
+{
+	if (work==true)
+    {
+        document.getElementById("scroll-level-notification").style.display='none';
+    	work=false;
+    	pause = Date.now();
+    	document.getElementById("main-switch").innerHTML = "Resume";
+        document.getElementById("pause-notify").style.display='inline-block';
+    }
+    else
+    {
+        work=true;
+        tournamentStarted = true
+        levelChangedManually=false;
+        document.getElementById("main-switch").innerHTML = "Pause";
+        document.getElementById("pause-notify").style.display='none';
+    }
+}
+
+function kick(playerId)
+{
+    //Here the code to kick players
+    if(document.getElementById("out"+playerId).innerHTML=="Out")
+    {
+        document.getElementById("player"+playerId).style.color = 'red';
+        document.getElementById("out"+playerId).innerHTML = "In";
+        playersLeft-=1;
+    }
+
+    //Here the code to unkick players
+    else
+    {
+        document.getElementById("player"+playerId).style.color = 'aquamarine';
+        document.getElementById("out"+playerId).innerHTML = "Out";
+        playersLeft+=1;
+        if(knockoutType==2)
+        {
+            players[playerId-1]['reward'] = knockoutMoney;
+            for (i=0; i < players.length; i+=1)
+            {
+                document.getElementById("reward"+(i+1)).innerHTML = "&#x2605 " + players[i]['reward'] + currency;
+            }
+        }
+    }
+
+    refreshGameInfo();
+}
+
+function rebuy(add)
+{
+    //add rebuy
+    if(add == true)
+    {
+        totalRebuys+=1;
+        chipsInPlay+=rebuyChips;
+        bank+=rebuyPrice;
+    }
+
+    //deduct rebuy
+    else
+    {
+        if(totalRebuys>0)
+        {
+            totalRebuys-=1;
+            chipsInPlay-=rebuyChips;
+            bank-=rebuyPrice;
+        }
+    }
+
+    refreshGameInfo();
+}
+
+function addon(add)
+{
+    //add rebuy
+    if(add == true)
+    {
+        totalAddons+=1;
+        chipsInPlay+=addonChips;
+        bank+=addonPrice;
+    }
+
+    //deduct rebuy
+    else
+    {
+        if(totalAddons>0)
+        {
+            totalAddons-=1;
+            chipsInPlay-=addonChips;
+            bank-=addonPrice;
+        }
+    }
+
+    refreshGameInfo();
+}
+
+function knockout()
+{
+    killer = document.getElementById("KO-killer").value;
+    victim = document.getElementById("KO-victim").value;
+
+    if(killer!=victim && killer.length > 0 && victim.length > 0)
+    {
+        document.getElementById("KO-killer").selectedIndex="0";
+        document.getElementById("KO-victim").selectedIndex="0";
+
+        //fixed knockouts
+        if(knockoutType==1)
+        {
+            for (i=0; i < players.length; i+=1)
+            {
+                if (victim == players[i])
+                {
+                    kick(i+1);
+                }
+            }
+
+            document.getElementById("KO-message").innerHTML += "<span id='KO-logger'>"+killer+"</span>" + " knocks out " + "<span id='KO-logger'>" + victim + "</span>" + " and receives "+ knockoutMoney + currency+"<br>";
+        }
+
+        //progressive knockouts
+        else
+
+        {
+
+            for (i=0; i < players.length; i+=1)
+            {
+                if (victim == players[i]['name'])
+                {
+                    bounty = players[i]['reward'];
+                    players[i]['reward']=0;
+                    kick(i+1);
+                    break;
+                }
+            }
+
+            document.getElementById("KO-message").innerHTML += "<span id='KO-logger'>"+killer+"</span>" + " knocks out " + "<span id='KO-logger'>" + victim + "</span>" + " and receives "+ Math.round(bounty*knockoutShare/100) + currency + ".<br>" + killer + " increases their own bounty by "+ (bounty-Math.round(bounty*knockoutShare/100)) +currency+".<br><br>";
+
+            for (i=0; i < players.length; i+=1)
+            {
+                if (killer == players[i]['name'])
+                {
+                    players[i]['reward']+=(bounty-Math.round(bounty*knockoutShare/100));
+                }
+            }
+
+            for (i=0; i < players.length; i+=1)
+            {
+                document.getElementById("reward"+(i+1)).innerHTML = "&#x2605 " + players[i]['reward'] + currency;
+            }
+        }        
+    }    
+}
+
+function clearLog()
+{
+    document.getElementById("KO-message").innerHTML = "<br><br>";
+}
+
+function refreshGameInfo()
+{
+    document.getElementById("chips-in-play").innerHTML = chipsInPlay;
+    document.getElementById("players-left").innerHTML = playersLeft + "/" + totalPlayers;
+    document.getElementById("average-stack").innerHTML = (chipsInPlay/playersLeft)|0;
+    document.getElementById("bank").innerHTML = bank + currency;
+    document.getElementById("total-rebuys").innerHTML = totalRebuys;
+    document.getElementById("total-addons").innerHTML = totalAddons;
+    document.getElementById("payouts-scheme").innerHTML = "";
+    for (i=0; i < payouts.length; i+=1)
+    {
+        document.getElementById("payouts-scheme").innerHTML += "<span id='prize'"+(i+1)+">"+(i+1)+". "+parseInt(payouts[i])*bank/100+currency+"</span><br>";
+    }
+}
+
+window.onload = function () 
+{
+    document.getElementById("break-section").style.display='none';
+    document.getElementById("game-title").innerHTML = "{{game_type}}"+'<br>';
+
+    for (i=0; i < payouts.length; i+=1)
+    {
+        document.getElementById("payouts-scheme").innerHTML += "<span id='prize'"+(i+1)+">"+(i+1)+". "+parseInt(payouts[i])*bank/100+currency+"</span><br>";
+    }
+
+    if("{{rebuy_game}}"=="No")
+    {
+        document.getElementById("game-with-rebuys").style.display='none';
+    }
+    else
+    {
+        
+    }
+
+    //if no knockout - just wrinting player names in game info
+    if("{{KO_type}}"=="0")
+    {
+        document.getElementById("log-section").style.display='none';
+
+        "{{players}}".split(',').forEach(function(item, i, arr) 
+        {
+            document.getElementById("players").innerHTML += "<button onclick='kick("+(i+1)+")' type='button' class='button-regular' id='out"+(i+1)+"'>Out</button>"+"<span class='player' id='player"+(i+1)+"'>"+item+"</span>"+"<br>";
+        });
+    }
+
+    //if fixed knockout - we add player names to the array 'players'
+    else if("{{KO_type}}"=="1")
+    {
+        "{{players}}".split(',').forEach(function(item, i, arr) 
+        {
+            document.getElementById("players").innerHTML += "<button onclick='kick("+(i+1)+")' type='button' class='button-regular' id='out"+(i+1)+"'>Out</button>"+"<span class='player' id='player"+(i+1)+"'>"+item+"</span>"+"<br>";
+            players.push(item);
+            document.getElementById("KO-killer").innerHTML += "<option>"+item+"</option>";
+            document.getElementById("KO-victim").innerHTML += "<option>"+item+"</option>";
+        });
+    }
+
+    //aaaand if progressive knockout ... :p
+    else
+    {
+        "{{players}}".split(',').forEach(function(item, i, arr) 
+        {
+            document.getElementById("players").innerHTML += "<button onclick='kick("+(i+1)+")' type='button' class='button-regular' id='out"+(i+1)+"'>Out</button>"+                        "<span class='player' id='player"+(i+1)+"'>"+item+"</span>"+"<span class='reward' id='reward"+(i+1)+"'>&#x2605  "+knockoutMoney+currency + "</span>"+"<br>";
+            players.push({name:item,reward:knockoutMoney});
+            document.getElementById("KO-killer").innerHTML += "<option>"+item+"</option>";
+            document.getElementById("KO-victim").innerHTML += "<option>"+item+"</option>";
+        });
+    }
+    
+	blindStructure = "{{structure}}".split(',');
+
+    blindStructure.forEach(function(item, i, arr) 
+    {
+        if("{{addon_game}}"=="Yes")
+        {
+            if(rebuyStopLevel==i)
+            {
+                levelObjects.push({type:"break",id:0,sb:0,bb:0});
+                levelObjects.push({type:"level",id:i+1,sb:parseInt(item)/2,bb:parseInt(item)});
+            }
+            else
+            {
+                levelObjects.push({type:"level",id:i+1,sb:parseInt(item)/2,bb:parseInt(item)});
+            }
+            //document.getElementById("debug").innerHTML += levelObjects[i]['id']+"<br>";
+        }
+        else
+        {
+            levelObjects.push({type:"level",id:i+1,sb:parseInt(item)/2,bb:parseInt(item)});
+        }
+    });
+
+	document.getElementById("blinds").innerHTML = (levelObjects[level]['sb'] +"/"+ levelObjects[level]['bb']);
+    document.getElementById("next-blinds").innerHTML = "<i>" + (levelObjects[level+1]['sb'] +"/"+ levelObjects[level+1]['bb']) + "</i>";
+	document.getElementById("current-level").innerHTML = levelTime;
+    document.getElementById("timer").innerHTML = "{{limit}}"+":00";
+    document.getElementById("rebuy-stop").innerHTML = rebuyStopLevel;
+    var levelTime = 60 * "{{limit}}", display = document.querySelector('#timer');
+    document.getElementById("current-level").innerHTML = level;
+    refreshGameInfo();
+    startTimer(levelTime, display);
+
+    //document.getElementById("debug").innerHTML = rebuyStopLevel;
+};
+
+window.onbeforeunload = function()
+{
+  return confirm('Are you sure you want to leave?');
+};
+
+</script>
+
+<!--
+Here comes the page mark-up
+-->
+
+
+<title>Poker Clock</title>
+<body>
+<div class="game">
+<div id="header">
+<hr>
+<h1 id="game-title"></h1>
+<hr>
+</div>
+
+    <div id="game-info">
+    <h2>Players:</h2>
+    <b id="players"></b><br>
+    <hr>
+
+        <div id="game-with-rebuys">
+        <h2 id="rebuys-description" style="color:aquamarine">Rebuys available through level <span id="rebuy-stop"></span></h2>
+        <p>Rebuys: <span id="total-rebuys"></span></p>
+        <button class='button-regular' id="rebuy-plus" onclick="rebuy(true)">+</button>
+        <button class='button-regular' id="rebuy-minus" onclick="rebuy(false)">-</button>
+        <hr>
+        </div>
+
+        <div id="game-with-addon">
+        <h2 id="addon-description" style="color:aquamarine"></h2>
+        <p>Add-ons: <span id="total-addons"></span></p>
+        <button class='button-regular' id="addon-plus" onclick="addon(true)" disabled>+</button>
+        <button class='button-regular' id="addon-minus" onclick="addon(false)" disabled>-</button>
+        <hr>
+        </div>
+
+    <h3>Players left: <span id="players-left"></span></h3>
+    <h3>Chips in play: <span id="chips-in-play"></span></h3>
+    <h3>Average stack: <span id="average-stack"></span></h3>
+    <h3>Bank: <span id="bank"></span><br></h3>
+    <hr>
+    <h3>Prizes</h3>
+    <h2 id="payouts-scheme"></h2>
+
+    <audio id="level-notify" src="{%static 'pokerclock/audio/new_level.mp3' %}" preload="auto"></audio>
+    </div>
+
+<div id="timer-container">
+<h1>Level <span id="current-level">1</span><br>Blinds: <span id="blinds"></span></h1>
+<h3><i>Next level: </i><span class="extra-info" id="next-level"><i>2</i></span><br><i>Blinds: </i><span class="extra-info" id="next-blinds"></span></h3>
+<h2><span id="timer"></span><span class="notify" id="pause-notify">On Pause</span></h2>
+<h2 id="break-section"><span id="break-timer">Break</span><span class="notify" id="break-notify"></span></h2>
+<button onclick="switchWork()" class='button-big' id="main-switch">Launch</button><br>
+    <div id="change-level">
+    <p>Change level</p>
+    <button onclick="changeLevel(false)" class='button-scroll' id="level-minus">&#8592</button>
+    <button onclick="changeLevel(true)" class='button-scroll' id="level-plus">&#8594</button><br>
+    <p id="scroll-level-notification" style="color:orange; display:none">You need to put on pause first</p>
+    <p id="debug"></p>
+    </div>
+</div>
+
+<div id="log-section">
+    <div id="KO-section">
+    <select id="KO-killer" class="selector" autocomplete="off"><option selected="selected"> </option></select>Knocks out
+    <select id="KO-victim" class="selector" autocomplete="off"><option selected="selected"> </option></select>
+    <button id="knockout-player" class="selector" onclick="knockout()">Confirm</button>
+    </div>
+<p id="KO-message" class="selector"><br><br></p>
+<hr>
+<button id="clear-log" class="selector" onclick="clearLog()">Clear log</button>
+</div>
+</div>
+
+</body>

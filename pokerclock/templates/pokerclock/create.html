@@ -1,0 +1,162 @@
+{% load staticfiles %}
+
+<head>
+<link rel="stylesheet" type="text/css" href="{% static 'pokerclock/style.css' %}" />
+<title>Poker Clock</title>
+</head>
+
+<body>
+
+<div class="create description">
+<h2>&spades; PLAY POKER WITH FRIENDS &clubs;</h2>
+<h3>Setup your custom tournament below OR just scroll down and press 'Create' to play the default tournament with 4 players</h3>
+</div>
+
+<div class="create">
+
+<form action="{%url 'pokerclock:game'%}" method="POST" id="create-form">
+{% csrf_token %}
+  Game type<br>
+  <select name="game-type" autocomplete="off" class="styled-selector">
+  <option selected="selected">Holdem</option>
+  <option>Omaha</option>
+  <option>Omaha Hi/Lo</option>
+  <option>5-Card Omaha</option>
+  <option>5-Card Omaha Hi/Lo</option>
+  <option>Courchevel</option>
+  <option>Courchevel Hi/Lo</option>
+  <option>2-7 Lowball Single Draw</option>
+  <option>2-7 Lowball Triple Draw</option>
+  <option>5-Card Draw</option>
+  <option>Irish Holdem</option>
+  <option>Stud</option>
+  <option>Stud Hi/Lo</option>
+  <option>Razz</option>
+  <option>Badugi</option>
+  <option>Dealer's Choice</option>
+  <!--
+  <option>Mixed Game</option>
+  -->
+  </select><br>
+  Limit<br>
+  <select name="bet-limit" autocomplete="off" class="styled-selector">
+  <option>NL</option>
+  <option>PL</option>
+  <option>FL</option>
+  <option>(Not specified))</option>
+  </select>
+  <p id="nlpl-explanation" style="color:orange; display:none">* Pre-flop Pot-limit, post-flop No-limit</p>
+  <br>
+  Blinds (only big blinds, below an example - feel free to edit)<br>
+  <input type="text" name="blinds-structure" autocomplete="off" size="100" value="50,100,150,200,250,300,400,500,600,800,1000,1200,1600,2000,2500,3000,4000,5000">
+  <br>
+  Start Stack<br>
+  <input type="number" name="start-stack" value="5000" step="100" min="100" autocomplete="off">
+  <br>
+  Level time<br>
+  <input type="text" name="time-level" value="10" autocomplete="off">
+  <br>
+  Buy-in<br>
+  <input type="number" name="buy-in" value="10" min="1" autocomplete="off">
+  <br>
+  Currency<br>
+    <select name="currency" autocomplete="off" class="styled-selector">
+  <option>USD</option>
+  <option>UAH</option>
+  </select>
+  <br>
+  Rebuys<br>
+  <input type="radio" name="rebuys" value="Yes" onclick="showRebuysOptions(true)" autocomplete="off">Yes
+  <input type="radio" name="rebuys" value="No" onclick="showRebuysOptions(false)" autocomplete="off" checked="checked">No
+  <br>
+
+    <div id="extraRebuyOptions">
+    Rebuy stop level<br>
+    <input type="number" name="rebuy-stop" value="10" min="1" autocomplete="off">
+    <br>
+    Rebuy price<br>
+    <input type="number" name="rebuy-price" value="10" min="1" autocomplete="off">
+    <br>
+    Rebuy chips<br>
+    <input type="number" name="rebuy-chips" value="5000" step="100" min="100" autocomplete="off">
+    <br>
+
+    Add-on price<br>
+    <input type="number" name="addon-price" value="10" autocomplete="off">
+    <br>
+    Add-on chips<br>
+    <input type="number" name="addon-chips" value="5000" step="100" min="100" autocomplete="off">
+    <br>
+    </div>
+
+  Knockout<br>
+  <input type="radio" name="KO" value="0" autocomplete="off" onclick="showKnockoutOptions(0)" checked="checked">No knockouts
+  <input type="radio" name="KO" value="1" autocomplete="off" onclick="showKnockoutOptions(1)">Fixed knockout
+  <input type="radio" name="KO" value="2" autocomplete="off" onclick="showKnockoutOptions(2)">Progressive knockout
+  <br>
+
+    <div id="KO-fixed">
+    Knockout price (NOT included in buy-in)<br>
+    <input type="number" name="KO-price" value="5" min="1" autocomplete="off">
+    <br>
+    </div>
+
+    <div id="KO-prog">
+    Knockout share (money that you win at once)<br>
+    <input type="radio" name="KO-share" value="25" autocomplete="off">25%
+    <input type="radio" name="KO-share" value="50" autocomplete="off" checked="checked">50%
+    <input type="radio" name="KO-share" value="75" autocomplete="off">75%
+    <br>
+    </div>
+
+    Players names<br>
+    <input type="text" name="player-names" size="80" value="Player 1,Player 2,Player 3,Player 4" autocomplete="off">
+    <br>
+
+  Payouts (1st place % of bank, 2nd place % of bank etc.)<br>
+  <input type="text" name="payouts-scheme" value="70,30" autocomplete="off">
+  <br>
+
+  <input type="submit" value="Create Tournament" name="create" autocomplete="off">
+</form>
+</div>
+
+<footer class="create">
+&copy; Vadim Khmyrov (it-is-my-email@mail.ru), 2016
+</footer>
+
+</body>
+
+<script>
+function showRebuysOptions(gameWithRebuys) 
+{
+    if(gameWithRebuys==true)
+    {
+      document.getElementById("extraRebuyOptions").style.display='block';
+    }
+    else
+    {
+      document.getElementById("extraRebuyOptions").style.display='none';
+    }
+}
+
+function showKnockoutOptions(KnockoutType) 
+{
+    if(KnockoutType=='0')
+    {
+      document.getElementById("KO-fixed").style.display='none';
+      document.getElementById("KO-prog").style.display='none';
+    }
+    else if (KnockoutType=='1')
+    {
+      document.getElementById("KO-fixed").style.display='block';
+      document.getElementById("KO-prog").style.display='none';
+    }
+    else
+    {
+      document.getElementById("KO-fixed").style.display='block';
+      document.getElementById("KO-prog").style.display='block';
+    } 
+}
+
+</script>

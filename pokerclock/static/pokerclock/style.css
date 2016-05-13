@@ -1,0 +1,256 @@
+a
+{
+    color: white;
+    font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
+}
+
+body
+{
+    background: white url("images/cardhouse.jpg");
+    background-repeat: repeat-xy;
+    font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
+    color:white;    
+    display:block;
+}
+
+.create
+{
+    width: 70%;  
+    text-align: center;
+    opacity: 0.9;
+    background: black;
+    background-repeat: repeat-xy;
+    padding: 10px;
+    margin: 5 auto;
+    border: solid #ffffff;
+    border-width: 2px;
+    border-radius: 15px;
+}
+
+body.error-window
+{
+    background: white url("images/brickwall.jpg");
+    background-repeat: repeat-xy;
+    font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
+    color:white;    
+}
+
+h1
+{
+    font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
+}
+
+h2
+{
+    color: white;
+    font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
+}
+
+h3
+{
+    color: white;
+    font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
+}
+
+p
+{
+    color: white;
+    font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif
+}
+
+form
+{
+    color:white;
+    text-align: center;
+}
+
+input
+{
+    margin-top: 10px;
+    margin-bottom: 10px;
+    border: none;
+    color: black;
+    padding: 5px 10px;
+    text-align: center;
+    font-size: 15px;
+    font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
+    cursor: pointer;
+    border-radius: 5px;
+    border-color: green;
+}
+
+.styled-selector
+{
+    margin-top: 10px;
+    margin-bottom: 10px;
+    border: none;
+    color: black;
+    padding: 5px 10px;
+    text-align: center;
+    font-size: 15px;
+    font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
+    cursor: pointer;
+    border-radius: 5px;
+    border-color: green;   
+}
+
+#container
+{
+    position: relative;
+}
+
+#footer
+{
+    position: relative;
+    bottom: 0;
+}
+
+#extraRebuyOptions
+{
+    display: none;
+}
+
+#KO-fixed
+{
+    display: none;
+}
+
+#KO-prog
+{
+    display: none;
+}
+
+#header
+{
+    opacity: 0.9;
+    background: black;
+    background-repeat: repeat-xy; 
+}
+
+
+#timer-container
+{
+    opacity: 0.9;
+    background: black;
+    background-repeat: repeat-xy;
+    width:30%;
+    padding: 10px;
+    float:left;
+    margin-top: 15px;
+    margin-left: 30px;
+    border: solid #ffffff;
+    border-width: 3px;
+    border-radius: 25px;
+}
+
+#game-info
+{
+    opacity: 0.9;
+    background: black;
+    background-repeat: repeat-xy;
+    width:25%;
+    padding: 10px;
+    float:left;
+    margin-top: 15px;
+    margin-left: 30px;
+    margin-bottom: 15px;
+    border: solid #ffffff;
+    border-width: 3px;
+    border-radius: 25px;
+}
+
+#log-section
+{
+    opacity: 0.9;
+    background: black;
+    background-repeat: repeat-xy;
+    width:20%;
+    padding: 10px;
+    float:left;
+    margin-top: 15px;
+    margin-left: 30px;
+    border: solid #ffffff;
+    border-width: 3px;
+    border-radius: 25px;
+}
+
+.button-regular
+{
+    margin-right: 20px;
+    width: 60px;
+}
+
+.button-big
+{
+    width: 100%;
+    height: 80px;
+    font-size: 225%;
+    border: 2px solid;
+    border-radius: 25px;
+}
+
+.button-scroll
+{
+    margin-right: 20px;
+    width: 60px;
+    height: 50px;
+    font-size: 175%;
+    border: 2px solid;
+    border-radius: 20px;
+}
+
+.player
+{
+    color:aquamarine;
+}
+
+.notify
+{
+    color:orange;
+    margin-left: 20px;
+}
+
+#timer
+{
+    font-size: 300%;
+}
+
+#break-timer
+{
+    font-size: 200%;
+    color:orange;
+}
+
+#KO-logger
+{
+    text-decoration: underline;
+}
+
+.selector
+{
+    margin: 5px;
+}
+
+.reward
+{
+    color:aquamarine;
+    margin-left: 10px;
+}
+
+#change-level
+{
+    margin-top: 20px;
+    padding: 5px;
+    display: inline-block;
+}
+
+#blinds
+{
+    color:orange;
+    font-size: 200%;
+}
+
+.extra-info
+{
+    text-decoration: italic;
+}
